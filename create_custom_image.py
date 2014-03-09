@@ -4,7 +4,11 @@ from PIL import Image
 from PIL import ImageFont
 from PIL import ImageDraw 
 
+counter = 0
+
 def put_message_on_shirt(msg, f):
+    global counter
+
     x_offset = 125
     y_rows = [125, 160, 195, 230, 265]  # y coordinate for each line
     width = 350
@@ -26,7 +30,10 @@ def put_message_on_shirt(msg, f):
         else:
             print "Message too long, not printing: '%s'" % (line)
 
-    img.save('sample-out.jpg')
+    fname = 'sample-out%d.jpg'%counter
+    counter += 1
+    img.save(fname)
+    return fname
 
 
 if __name__ == '__main__':

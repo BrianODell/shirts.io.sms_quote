@@ -1,8 +1,16 @@
-from flask import Flask, request, redirect
+from StringIO import StringIO
+
+from flask import (Flask,
+                   request,
+                   redirect,
+                   send_file,
+                   abort,
+                   url_for)
 import twilio.twiml
 import requests
 
 from api_key import API_KEY
+from create_custom_image import put_message_on_shirt
  
 app = Flask(__name__)
  
@@ -13,9 +21,9 @@ def sms_quote():
     # stdout goes to log on Heroku
     print request.values.to_dict()
 
-    color = request.values['Body']
+    color, msg = request.values['Body'].split(' ', 1)
 
-    image_url = get_tshirt_image_url(color)
+    image_url = get_tshirt_with_msg_url(color, msg)
 
     if image_url:
         count, price_per = get_quote(color)
@@ -32,6 +40,24 @@ def sms_quote():
     resp.message(msg)
     return str(resp)
  
+
+@app.route('/i/<fname>', methods=['GET'])
+def tshirt_image(fname):
+    # relying on python to close this file when it gets gc 
+    if fname.endswith("jpg"):
+        f = open(fname)
+        return send_file(f, mimetype='image/jpeg')
+    else:
+        abort(404)
+
+def get_tshirt_with_msg_url(color, msg):
+    image_url = get_tshirt_image_url(color)
+    r = requests.get(image_url)
+    f = StringIO(r.content)
+    f.seek(0)
+    fname = put_message_on_shirt(msg, f)
+    return url_for('tshirt_image', fname=fname)
+
 
 def get_tshirt_image_url(color):
     product_id=2
